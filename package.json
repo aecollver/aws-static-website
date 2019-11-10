@@ -1,0 +1,22 @@
+{
+  "name": "aws-static-website",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aecollver/aws-static-website.git"
+  },
+  "license": "MIT License",
+  "author": "Aaron Collver",
+  "scripts": {
+    "deploy": "cdk deploy --profile ${npm_config_aws_profile} --app 'npm run deploy-synthesize'",
+    "deploy-synthesize": "ts-node src/website.ts"
+  },
+  "devDependencies": {
+    "@aws-cdk/core": "1.15.0",
+    "@types/node": "12.12.7",
+    "aws-cdk": "1.15.0",
+    "is-valid-domain": "0.0.11",
+    "ts-node": "8.4.1",
+    "typescript": "3.7.2"
+  }
+}
