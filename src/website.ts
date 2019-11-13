@@ -60,7 +60,7 @@ if (!isValidDomain(domainName)) {
   throw new Error(`Invalid domain: ${domainName}`);
 }
 
-new WebsiteStack(app, `Website-${domainName.replace(".", "-")}`, {
+new WebsiteStack(app, `Website-${domainName.replace(/./g, "-")}`, {
   env: {
     // Create the stack in us-east-1 because CloudFront expects an ACM certificate in us-east-1
     region: "us-east-1"
