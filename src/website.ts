@@ -1,12 +1,18 @@
 import { CfnCloudFrontOriginAccessIdentity, CloudFrontWebDistribution, OriginProtocolPolicy } from "@aws-cdk/aws-cloudfront";
-import { CanonicalUserPrincipal, PolicyStatement } from "@aws-cdk/aws-iam";
+import { CanonicalUserPrincipal } from "@aws-cdk/aws-iam";
+import { ARecord, HostedZone, RecordTarget } from "@aws-cdk/aws-route53";
+import { CloudFrontTarget } from "@aws-cdk/aws-route53-targets";
 import { Bucket, RedirectProtocol } from "@aws-cdk/aws-s3";
-import { App, Construct, Stack, StackProps, RemovalPolicy } from "@aws-cdk/core";
+import { App, Construct, RemovalPolicy, Stack, StackProps } from "@aws-cdk/core";
 import isValidDomain from "is-valid-domain";
 
 class WebsiteStack extends Stack {
   constructor(scope: Construct, name: string, props: StackProps) {
     super(scope, name, props);
+
+    const zone = new HostedZone(this, process.env.npm_config_domain_name, {
+      zoneName: process.env.npm_config_domain_name
+    });
 
     // https://github.com/aws/aws-cdk/issues/941
     const contentAccessIdentity = new CfnCloudFrontOriginAccessIdentity(this, "ContentAccessIdentity", {
@@ -31,6 +37,14 @@ class WebsiteStack extends Stack {
       }]
     });
 
+    new ARecord(this, 'ApexRecord', {
+      zone,
+      recordName: `${process.env.npm_config_domain_name}.`,
+      target: {
+        aliasTarget: new CloudFrontTarget(website)
+      }
+    });
+
     if (process.env.npm_config_redirect_domain_name) {
       const redirect = new Bucket(this, "RedirectContent", {
         websiteRedirect: {
@@ -40,7 +54,7 @@ class WebsiteStack extends Stack {
         removalPolicy: RemovalPolicy.DESTROY
       });
 
-      new CloudFrontWebDistribution(this, "RedirectWebsite", {
+      const redirectWebsite = new CloudFrontWebDistribution(this, "RedirectWebsite", {
         comment: process.env.npm_config_redirect_domain_name,
         originConfigs: [{
           behaviors: [{ isDefaultBehavior: true }],
@@ -49,6 +63,14 @@ class WebsiteStack extends Stack {
             originProtocolPolicy: OriginProtocolPolicy.HTTP_ONLY
           }
         }]
+      });
+
+      new ARecord(this, 'RedirectRecord', {
+        zone,
+        recordName: `${process.env.npm_config_redirect_domain_name}.`,
+        target: {
+          aliasTarget: new CloudFrontTarget(redirectWebsite)
+        }
       });
     }
   }
@@ -60,7 +82,7 @@ if (!isValidDomain(domainName)) {
   throw new Error(`Invalid domain: ${domainName}`);
 }
 
-new WebsiteStack(app, `Website-${domainName.replace(/./g, "-")}`, {
+new WebsiteStack(app, `Website-${domainName.replace(/\./g, "-")}`, {
   env: {
     // Create the stack in us-east-1 because CloudFront expects an ACM certificate in us-east-1
     region: "us-east-1"

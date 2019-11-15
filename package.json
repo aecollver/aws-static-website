@@ -15,6 +15,8 @@
     "@aws-cdk/core": "1.15.0",
     "@aws-cdk/aws-cloudfront": "1.15.0",
     "@aws-cdk/aws-iam": "1.15.0",
+    "@aws-cdk/aws-route53": "1.15.0",
+    "@aws-cdk/aws-route53-targets": "1.15.0",
     "@aws-cdk/aws-s3": "1.15.0",
     "@types/node": "12.12.7",
     "aws-cdk": "1.15.0",
