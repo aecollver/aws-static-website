@@ -1,23 +1,28 @@
 import { CfnCloudFrontOriginAccessIdentity, CloudFrontWebDistribution, OriginProtocolPolicy } from "@aws-cdk/aws-cloudfront";
 import { CanonicalUserPrincipal } from "@aws-cdk/aws-iam";
-import { ARecord, HostedZone, RecordTarget } from "@aws-cdk/aws-route53";
+import { ARecord, HostedZone } from "@aws-cdk/aws-route53";
 import { CloudFrontTarget } from "@aws-cdk/aws-route53-targets";
 import { Bucket, RedirectProtocol } from "@aws-cdk/aws-s3";
 import { App, Construct, RemovalPolicy, Stack, StackProps } from "@aws-cdk/core";
 import isValidDomain from "is-valid-domain";
 
+interface WebsiteStackProps extends StackProps {
+  domainName: string;
+  redirectDomainName?: string;
+}
+
 class WebsiteStack extends Stack {
-  constructor(scope: Construct, name: string, props: StackProps) {
+  constructor(scope: Construct, name: string, props: WebsiteStackProps) {
     super(scope, name, props);
 
-    const zone = new HostedZone(this, process.env.npm_config_domain_name, {
-      zoneName: process.env.npm_config_domain_name
+    const zone = new HostedZone(this, props.domainName, {
+      zoneName: props.domainName
     });
 
     // https://github.com/aws/aws-cdk/issues/941
     const contentAccessIdentity = new CfnCloudFrontOriginAccessIdentity(this, "ContentAccessIdentity", {
       cloudFrontOriginAccessIdentityConfig: {
-        comment: process.env.npm_config_domain_name
+        comment: props.domainName
       }
     });
 
@@ -27,7 +32,7 @@ class WebsiteStack extends Stack {
     content.grantRead(new CanonicalUserPrincipal(contentAccessIdentity.getAtt("S3CanonicalUserId").toString()));
 
     const website = new CloudFrontWebDistribution(this, "Website", {
-      comment: process.env.npm_config_domain_name,
+      comment: props.domainName,
       originConfigs: [{
         behaviors: [{ isDefaultBehavior: true }],
         s3OriginSource: {
@@ -39,13 +44,13 @@ class WebsiteStack extends Stack {
 
     new ARecord(this, 'ApexRecord', {
       zone,
-      recordName: `${process.env.npm_config_domain_name}.`,
+      recordName: `${props.domainName}.`,
       target: {
         aliasTarget: new CloudFrontTarget(website)
       }
     });
 
-    if (process.env.npm_config_redirect_domain_name) {
+    if (props.redirectDomainName) {
       const redirect = new Bucket(this, "RedirectContent", {
         websiteRedirect: {
           protocol: RedirectProtocol.HTTPS,
@@ -55,7 +60,7 @@ class WebsiteStack extends Stack {
       });
 
       const redirectWebsite = new CloudFrontWebDistribution(this, "RedirectWebsite", {
-        comment: process.env.npm_config_redirect_domain_name,
+        comment: props.redirectDomainName,
         originConfigs: [{
           behaviors: [{ isDefaultBehavior: true }],
           customOriginSource: {
@@ -67,7 +72,7 @@ class WebsiteStack extends Stack {
 
       new ARecord(this, 'RedirectRecord', {
         zone,
-        recordName: `${process.env.npm_config_redirect_domain_name}.`,
+        recordName: `${props.redirectDomainName}.`,
         target: {
           aliasTarget: new CloudFrontTarget(redirectWebsite)
         }
@@ -77,12 +82,14 @@ class WebsiteStack extends Stack {
 }
 
 const app = new App();
-const domainName: string = process.env.npm_config_domain_name;
+const domainName: string = app.node.tryGetContext("domain_name");
 if (!isValidDomain(domainName)) {
   throw new Error(`Invalid domain: ${domainName}`);
 }
 
 new WebsiteStack(app, `Website-${domainName.replace(/\./g, "-")}`, {
+  domainName,
+  redirectDomainName: app.node.tryGetContext("redirect_domain_name"),
   env: {
     // Create the stack in us-east-1 because CloudFront expects an ACM certificate in us-east-1
     region: "us-east-1"

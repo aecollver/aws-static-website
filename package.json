@@ -7,17 +7,22 @@
   },
   "license": "MIT License",
   "author": "Aaron Collver",
+  "bin": {
+    "aws-static-website": "bin/aws-static-website"
+  },
   "scripts": {
-    "deploy": "cdk deploy --profile ${npm_config_aws_profile} --app 'npm run deploy-synthesize'",
+    "deploy": "cdk synthesize --app 'npm run deploy-synthesize'",
     "deploy-synthesize": "ts-node src/website.ts"
   },
-  "devDependencies": {
+  "dependencies": {
     "@aws-cdk/core": "1.15.0",
     "@aws-cdk/aws-cloudfront": "1.15.0",
     "@aws-cdk/aws-iam": "1.15.0",
     "@aws-cdk/aws-route53": "1.15.0",
     "@aws-cdk/aws-route53-targets": "1.15.0",
-    "@aws-cdk/aws-s3": "1.15.0",
+    "@aws-cdk/aws-s3": "1.15.0"
+  },
+  "devDependencies": {
     "@types/node": "12.12.7",
     "aws-cdk": "1.15.0",
     "is-valid-domain": "0.0.11",
