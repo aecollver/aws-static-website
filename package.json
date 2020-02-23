@@ -11,7 +11,7 @@
     "aws-static-website": "bin/aws-static-website"
   },
   "scripts": {
-    "deploy": "cdk synthesize --app 'npm run deploy-synthesize'",
+    "deploy": "cdk deploy --app 'npm run deploy-synthesize'",
     "deploy-synthesize": "ts-node src/website.ts"
   },
   "dependencies": {
