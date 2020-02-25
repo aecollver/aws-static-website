@@ -1,12 +1,9 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "esModuleInterop": true,
-    "target": "es6",
-    "lib": [
-      "esnext"
-    ],
-    "baseUrl": "src"
+    "module": "commonjs",
+    "outDir": "dist",
+    "target": "ES2018"
   },
   "include": [
     "src/**/*.ts"

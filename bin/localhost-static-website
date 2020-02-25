@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+
+const child_process = require("child_process");
+const path = require("path");
+
+const moduleRoot = path.resolve(path.join(__dirname, ".."));
+
+child_process.execSync(`cd ${moduleRoot} && $(npm bin)/ts-node src/server.ts -- ${process.cwd()}`, {
+  stdio: "inherit"
+});
