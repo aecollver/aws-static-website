@@ -15,5 +15,8 @@ Add config to `package.json` file that looks like:
 
 Key: `<Required>, [Optional]`
 
+## Preview (localhost):
+Run `localhost-static-website`
+
 ## Deploy
 Run `aws-static-website`
