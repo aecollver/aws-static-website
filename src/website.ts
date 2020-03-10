@@ -3,7 +3,7 @@ import { CanonicalUserPrincipal } from "@aws-cdk/aws-iam";
 import { ARecord, HostedZone } from "@aws-cdk/aws-route53";
 import { CloudFrontTarget } from "@aws-cdk/aws-route53-targets";
 import { Bucket, RedirectProtocol } from "@aws-cdk/aws-s3";
-import { App, Construct, RemovalPolicy, Stack, StackProps } from "@aws-cdk/core";
+import { App, Construct, RemovalPolicy, Stack, StackProps, CfnOutput } from "@aws-cdk/core";
 import isValidDomain from "is-valid-domain";
 
 interface WebsiteStackProps extends StackProps {
@@ -30,6 +30,9 @@ class WebsiteStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     });
     content.grantRead(new CanonicalUserPrincipal(contentAccessIdentity.getAtt("S3CanonicalUserId").toString()));
+    new CfnOutput(this, "ContentBucketName", {
+      value: content.bucketName
+    });
 
     const website = new CloudFrontWebDistribution(this, "Website", {
       comment: props.domainName,
@@ -37,9 +40,12 @@ class WebsiteStack extends Stack {
         behaviors: [{ isDefaultBehavior: true }],
         s3OriginSource: {
           s3BucketSource: content,
-          originAccessIdentityId: contentAccessIdentity.ref
+          originAccessIdentityId: contentAccessIdentity.ref,
         }
       }]
+    });
+    new CfnOutput(this, "WebsiteDomain", {
+      value: website.domainName
     });
 
     new ARecord(this, 'ApexRecord', {
